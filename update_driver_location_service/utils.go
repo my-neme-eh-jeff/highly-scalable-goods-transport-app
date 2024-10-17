@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,10 +11,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var (
-	ctx         = context.Background()
-	redisClient *redis.Client
-)
 
 func init() {
 	// Load environment variables
@@ -40,17 +35,28 @@ func init() {
 	log.Println("Connected to Redis successfully.")
 }
 
-func SaveDriverLocationToRedis(driverID int, lat, lng float64) {
-	key := fmt.Sprintf("driver_location:%d", driverID)
-	loc := Location{
-		Lat: lat,
-		Lng: lng,
-	}
-	locBytes, _ := json.Marshal(loc)
-	err := redisClient.Set(ctx, key, locBytes, time.Minute*10).Err()
-	if err != nil {
-		log.Printf("Failed to save driver location to Redis: %v", err)
-	} else {
-		log.Printf("Driver location saved to Redis for driver %d", driverID)
-	}
+func SaveDriverLocationToRedis(driverID int, location Location) {
+    key := fmt.Sprintf("driver_location:%d", driverID)
+    locationJSON, err := json.Marshal(location)
+    if err != nil {
+        log.Printf("Error marshaling location: %v", err)
+        return
+    }
+
+    err = redisClient.Set(ctx, key, locationJSON, 0).Err()
+    if err != nil {
+        log.Printf("Error saving driver location to Redis: %v", err)
+    }
+}
+
+func SaveLocationToMongoDB(bookingID string, lat, lng float64) {
+    collection := mongoClient.Database("transport").Collection("locations")
+    _, err := collection.InsertOne(ctx, LocationRecord{
+        BookingID: bookingID,
+        Location:  Location{Lat: lat, Lng: lng},
+        Timestamp: time.Now(),
+    })
+    if err != nil {
+        log.Printf("Error saving location to MongoDB: %v", err)
+    }
 }

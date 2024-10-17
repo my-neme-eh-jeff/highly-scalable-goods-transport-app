@@ -3,11 +3,43 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 )
+
+func GetGridKey(location Location) string {
+	lat := math.Round(location.Lat*1000) / 1000
+	lng := math.Round(location.Lng*1000) / 1000
+	return fmt.Sprintf("%f:%f", lat, lng)
+}
+
+func CheckSurgePricing(location Location) float64 {
+	key := "fare_requests:" + GetGridKey(location)
+	count, err := redisClient.Get(ctx, key).Int()
+	if err != nil && err != redis.Nil {
+		log.Printf("Redis Get error: %v", err)
+		return 1.0
+	}
+	if count > 5 {
+		return 1.5 // 50% surge
+	}
+	return 1.0
+}
+
+func SaveFareRequestInRedis(userID int, location Location) {
+	key := "fare_requests:" + GetGridKey(location)
+	err := redisClient.Incr(ctx, key).Err()
+	if err != nil {
+		log.Printf("Redis Incr error: %v", err)
+	}
+	err = redisClient.Expire(ctx, key, time.Minute*1).Err()
+	if err != nil {
+		log.Printf("Redis Expire error: %v", err)
+	}
+}
 
 func CalculateDistance(lat1, lon1, lat2, lon2 float64) float64 {
 	const R = 6371 // Earth radius in KM
@@ -21,24 +53,6 @@ func CalculateDistance(lat1, lon1, lat2, lon2 float64) float64 {
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 	distance := R * c
 	return distance
-}
-
-func CheckSurgePricing(location Location) float64 {
-	key := fmt.Sprintf("fare_requests:%f:%f", location.Lat, location.Lng)
-	count, err := redisClient.Get(ctx, key).Int()
-	if err != nil && err != redis.Nil {
-		return 1.0
-	}
-	if count > 5 {
-		return 1.5 // 50% surge
-	}
-	return 1.0
-}
-
-func SaveFareRequestInRedis(userID int, location Location) {
-	key := fmt.Sprintf("fare_requests:%f:%f", location.Lat, location.Lng)
-	redisClient.Incr(ctx, key)
-	redisClient.Expire(ctx, key, time.Minute*1)
 }
 
 func SavePayment(payment Payment) (int, error) {

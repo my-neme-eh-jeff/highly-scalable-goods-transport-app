@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type Booking struct {
 	ID              int
 	UserID          int
@@ -14,4 +16,20 @@ type Booking struct {
 type Location struct {
 	Lat float64 `json:"lat"`
 	Lng float64 `json:"lng"`
+}
+
+type BookingDetailsResponse struct {
+	BookingID       int      `json:"booking_id"`
+	UserID          int      `json:"user_id"`
+	DriverID        int      `json:"driver_id"`
+	PickupLocation  Location `json:"pickup_location"`
+	DropoffLocation Location `json:"dropoff_location"`
+	FareAmount      float64  `json:"fare_amount"`
+	Status          string   `json:"status"`
+}
+
+type LocationRecord struct {
+	BookingID string    `bson:"booking_id"`
+	Location  Location  `bson:"location"`
+	Timestamp time.Time `bson:"timestamp"`
 }

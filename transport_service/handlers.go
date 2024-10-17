@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 func BookTransport(w http.ResponseWriter, r *http.Request) {
@@ -65,3 +66,57 @@ func DriverRespondBooking(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
+
+func GetUserBookings(w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		http.Error(w, "Missing user_id parameter", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid user_id parameter", http.StatusBadRequest)
+		return
+	}
+
+	bookings, err := GetBookingsByUserID(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(bookings)
+}
+
+func DriverCompleteRide(w http.ResponseWriter, r *http.Request) {
+    var req struct {
+        DriverID  int `json:"driver_id"`
+        BookingID int `json:"booking_id"`
+    }
+
+    err := json.NewDecoder(r.Body).Decode(&req)
+    if err != nil {
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        return
+    }
+
+    // Update booking status to 'COMPLETED'
+    err = UpdateBookingStatus(req.BookingID, "COMPLETED")
+    if err != nil {
+        http.Error(w, "Failed to update booking status", http.StatusInternalServerError)
+        return
+    }
+
+    // Release driver lock
+    ReleaseDriverLock(req.DriverID)
+
+    // Respond to the driver
+    resp := map[string]string{
+        "status": "COMPLETED",
+    }
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(resp)
+}
+

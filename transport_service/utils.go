@@ -58,16 +58,17 @@ func init() {
 
 	// Ensure the 'bookings' table exists
 	_, err = dbPool.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS bookings (
-			id SERIAL PRIMARY KEY,
-			user_id INTEGER NOT NULL,
-			pickup_location GEOGRAPHY(POINT),
-			dropoff_location GEOGRAPHY(POINT),
-			fare_amount DECIMAL(10,2),
-			status VARCHAR(20),
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
+        CREATE TABLE IF NOT EXISTS bookings (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            driver_id INTEGER,
+            pickup_location GEOGRAPHY(POINT),
+            dropoff_location GEOGRAPHY(POINT),
+            fare_amount DECIMAL(10,2),
+            status VARCHAR(20),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `)
 	if err != nil {
 		log.Fatalf("Error creating 'bookings' table: %v", err)
 	}
@@ -186,4 +187,46 @@ func ReleaseDriverLock(driverID int) {
 	if err != nil {
 		log.Printf("Failed to release driver lock: %v", err)
 	}
+}
+
+func GetBookingsByUserID(userID int) ([]Booking, error) {
+	var bookings []Booking
+	query := `
+        SELECT id, user_id, driver_id,
+               ST_Y(pickup_location::geometry) AS pickup_lat,
+               ST_X(pickup_location::geometry) AS pickup_lng,
+               ST_Y(dropoff_location::geometry) AS dropoff_lat,
+               ST_X(dropoff_location::geometry) AS dropoff_lng,
+               fare_amount, status, created_at
+        FROM bookings
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+    `
+	rows, err := dbPool.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var booking Booking
+		err := rows.Scan(
+			&booking.ID,
+			&booking.UserID,
+			&booking.DriverID,
+			&booking.PickupLocation.Lat,
+			&booking.PickupLocation.Lng,
+			&booking.DropoffLocation.Lat,
+			&booking.DropoffLocation.Lng,
+			&booking.FareAmount,
+			&booking.Status,
+			&booking.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		bookings = append(bookings, booking)
+	}
+
+	return bookings, nil
 }

@@ -14,6 +14,7 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/user/track-transport", TrackTransport).Methods("GET")
+	router.HandleFunc("/api/user/get-bookings", GetUserBookings).Methods("GET")
 
 	handler := cors.Default().Handler(router)
 	loggedRouter := handlers.LoggingHandler(os.Stdout, handler)

@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/streadway/amqp"
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,6 +18,7 @@ import (
 var (
 	mongoClient *mongo.Client
 	ctx         = context.Background()
+	dbPool      *pgxpool.Pool
 )
 
 func init() {
@@ -62,10 +64,10 @@ func ensureLocationsCollectionExists() error {
 	// Create an index on booking_id and timestamp fields
 	indexModel := mongo.IndexModel{
 		Keys: bson.D{
-			{Key: "booking_id", Value: 1},   
-			{Key: "timestamp", Value: 1},    
+			{Key: "booking_id", Value: 1},
+			{Key: "timestamp", Value: 1},
 		},
-		Options: options.Index().SetUnique(false), 
+		Options: options.Index().SetUnique(false),
 	}
 
 	_, err := indexes.CreateOne(ctx, indexModel)
@@ -120,4 +122,21 @@ func GetLatestLocation(bookingID string) string {
 		return ""
 	}
 	return result["location"].(string)
+}
+
+func GetMongoChangeStream(bookingID string) *mongo.ChangeStream {
+	collection := mongoClient.Database("transport").Collection("locations")
+
+	pipeline := mongo.Pipeline{
+		{{"$match", bson.D{
+			{"fullDocument.booking_id", bookingID},
+		}}},
+	}
+
+	opts := options.ChangeStream().SetFullDocument(options.UpdateLookup)
+	changeStream, err := collection.Watch(ctx, pipeline, opts)
+	if err != nil {
+		log.Printf("Error creating change stream: %v", err)
+	}
+	return changeStream
 }
