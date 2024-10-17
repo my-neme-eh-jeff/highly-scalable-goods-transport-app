@@ -1,3 +1,5 @@
+"use client";
+import "leaflet/dist/leaflet.css";
 import L, {
   DivIcon,
   LatLng,
@@ -14,9 +16,19 @@ import {
 } from "react-leaflet";
 
 //!import order matters
-import "leaflet-defaulticon-compatibility";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css";
+import icon from "leaflet/dist/images/marker-icon.png";
+
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
 import "leaflet/dist/leaflet.css";
+
+const DefaultIcon = L.icon({
+  iconUrl: icon as unknown as string,
+  shadowUrl: iconShadow as unknown as string,
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 
@@ -161,8 +173,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
           </Marker>
         )}
       </MapContainer>
-      <div className="flex gap-x-10 justify-between mt-4">
-        {allowReset && <Button onClick={handleReset}>Reset Locations</Button>}
+      <div className="flex gap-x-10 justify-between mt-2">
+        {allowReset && (
+          <Button variant={"destructive"} onClick={handleReset}>
+            Reset Locations
+          </Button>
+        )}
         {!isDefaultLocation && allowTheUseOfUserLocationAsInitial && (
           <Button onClick={useUserLocationAsInitial}>
             Use current Location

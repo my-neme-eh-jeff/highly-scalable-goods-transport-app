@@ -18,29 +18,29 @@ export default function Navbar() {
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
         <Link
-          href="#"
+          href="/"
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
           <Truck className="h-6 w-6" />
           TransMart
         </Link>
         <Link
-          href="#"
+          href="/user"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
           Dashboard
         </Link>
         <Link
-          href="#"
+          href="/user/track-transport"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
-          History
+          Track
         </Link>
         <Link
-          href="#"
-          className="text-foreground transition-colors hover:text-foreground"
+          href="/user/book-transport"
+          className="text-muted-foreground transition-colors hover:text-foreground"
         >
-          Settings
+          Book
         </Link>
       </nav>
       <Sheet>
@@ -69,16 +69,13 @@ export default function Navbar() {
               href="#"
               className="text-muted-foreground hover:text-foreground"
             >
-              History
+              Track
             </Link>
             <Link
               href="#"
               className="text-muted-foreground hover:text-foreground"
             >
-              Customers
-            </Link>
-            <Link href="#" className="hover:text-foreground">
-              Settings
+              Book
             </Link>
           </nav>
         </SheetContent>
