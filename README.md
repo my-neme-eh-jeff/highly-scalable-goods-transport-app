@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚗 Ride-Sharing Platform
 
-## Getting Started
+A comprehensive ride-sharing solution built with modern technologies, featuring real-time tracking, interactive maps, and seamless payment integration.
 
-First, run the development server:
+## 📑 Table of Contents
+- [Overview](#overview)
+- [Repository Structure](#repository-structure)
+- [Key Features](#key-features)
+- [Technology Stack](#technology-stack)
+- [Getting Started](#getting-started)
+- [Branch Information](#branch-information)
+- [Contributing](#contributing)
+- [License](#license)
 
+## 🌟 Overview
+
+This project implements a complete ride-sharing platform with both frontend and backend components. The platform facilitates real-time ride booking, driver matching, location tracking, and payment processing through a microservices architecture and a modern web interface.
+
+## ✨ Key Features
+
+- Dynamic fare calculation with surge pricing
+- Seamless payment processing
+- Driver-passenger matching algorithm with locking mechanism
+- Interactive map integration
+- Real-time location updates for tracking driver
+- Comprehensive booking management
+- Responsive user interface
+
+## 💻 Technology Stack
+
+### Frontend
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui components
+
+### Backend
+- Go (Golang)
+- PostgreSQL
+- Redis
+- MongoDB
+- RabbitMQ
+- Apache Kafka
+
+## 🚀 Getting Started
+
+### Branch Information
+
+This repository maintains three main branches:
+- `master` - Main development branch (identical to `web`)
+- `web` - Frontend application
+- `backend` - Backend services
+
+### Quick Start
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your_username/your_repository.git
+cd your_repository
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Choose your branch based on your needs:
+```bash
+# For frontend development
+git checkout web
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# For backend development
+git checkout backend
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📘 Documentation
 
-## Learn More
+### Frontend Application (web branch)
+The frontend is a Next.js application providing the user interface for the ride-sharing platform. For detailed setup and running instructions, please switch to the `web` branch and refer to its README.
 
-To learn more about Next.js, take a look at the following resources:
+Key frontend features:
+- Interactive map for ride booking
+- Real-time ride tracking
+- Fare estimates and surge pricing
+- Responsive design
+- Modern UI components
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Backend Services (backend branch)
+The backend consists of multiple microservices built with Go. For detailed setup and running instructions, please switch to the `backend` branch and refer to its README.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
