@@ -35,6 +35,17 @@ Ensure you have the following installed on your system:
 - **RabbitMQ** - [Download RabbitMQ](https://www.rabbitmq.com/download.html)
 - **Apache Kafka** - [Download Kafka](https://kafka.apache.org/downloads)
 
+### Additional installtions
+  - librdkafka
+    ```
+      sudo apt-get install -y librdkafka-dev
+    ```
+  - Other dependent libraries
+    ```
+      sudo apt-get install build-essential pkg-config git
+    ```
+*These are needed if you are using confluence cloud as kafka provider. You need not to install it if using some other cloud provider*
+  
 > **Note**: You can alternatively use setlf hosting for these databases and message brokers. Make sure you have the connection strings and credentials ready.
 
 ## 📁 Project Structure
