@@ -33,3 +33,4 @@ type LocationRecord struct {
 	Location  Location  `bson:"location"`
 	Timestamp time.Time `bson:"timestamp"`
 }
+

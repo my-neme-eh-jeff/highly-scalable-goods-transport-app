@@ -94,6 +94,7 @@ func GetFare(w http.ResponseWriter, r *http.Request) {
 	// Check for surge pricing
 	surgeMultiplier := CheckSurgePricing(req.PickupLocation)
 	fare *= surgeMultiplier
+	fmt.Println("Surge Multiplier: ", surgeMultiplier)
 
 	// Save fare request in Redis payment cache
 	SaveFareRequestInRedis(req.UserID, req.PickupLocation)

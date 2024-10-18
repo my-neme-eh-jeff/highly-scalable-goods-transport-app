@@ -78,6 +78,8 @@ func init() {
 
 func SaveBooking(req BookingRequest) (int, error) {
 	var bookingID int
+	//print the req
+	fmt.Println(req)
 	query := `
         INSERT INTO bookings (user_id, pickup_location, dropoff_location, fare_amount, status)
         VALUES ($1, ST_GeographyFromText($2), ST_GeographyFromText($3), $4, $5) RETURNING id`
@@ -126,23 +128,27 @@ func PushToKafka(topic string, message interface{}) error {
 		Value:          msgBytes,
 	}, nil)
 
-	
 	// Flush messages to Kafka
 	p.Flush(15000)
 	return err
 }
 
 func UpdateBookingStatus(bookingID int, status string) error {
-    _, err := dbPool.Exec(ctx, `
+	_, err := dbPool.Exec(ctx, `
         UPDATE bookings SET status = $1 WHERE id = $2
     `, status, bookingID)
-    if err != nil {
-        log.Printf("Error updating booking status: %v", err)
-        return err
-    }
-    return nil
+	if status == "ACCEPTED" {
+		PushEventToRabbitMQ("booking_accepted", bookingID)
+	}
+	if(status == "COMPLETED"){
+		PushEventToRabbitMQ("booking_completed", bookingID)
+	}
+	if err != nil {
+		log.Printf("Error updating booking status: %v", err)
+		return err
+	}
+	return nil
 }
-
 
 func PushEventToRabbitMQ(eventType string, bookingID int) error {
 	conn, err := amqp.Dial(os.Getenv("CLOUDAMQP_URL"))
@@ -194,6 +200,8 @@ func ReleaseDriverLock(driverID int) {
 
 func GetBookingsByUserID(userID int64) ([]Booking, error) {
 	var bookings []Booking
+	//print the user id
+	fmt.Println(userID)
 	query := `
         SELECT id, user_id, driver_id,
                ST_Y(pickup_location::geometry) AS pickup_lat,
@@ -229,6 +237,7 @@ func GetBookingsByUserID(userID int64) ([]Booking, error) {
 			return nil, err
 		}
 		bookings = append(bookings, booking)
+		fmt.Println(booking)
 	}
 
 	return bookings, nil

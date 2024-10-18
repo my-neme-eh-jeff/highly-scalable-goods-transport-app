@@ -2,7 +2,7 @@ package main
 
 type Booking struct {
 	BookingID       int      `json:"booking_id"`
-	UserID          int64           `json:"user_id"`
+	UserID          int64      `json:"user_id"`
 	PickupLocation  Location `json:"pickup_location"`
 	DropoffLocation Location `json:"dropoff_location"`
 	FareAmount      float64  `json:"fare_amount"`

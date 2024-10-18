@@ -1,3 +1,5 @@
+// handlers.go
+
 package main
 
 import (
@@ -5,117 +7,98 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
+	"sync"
 )
 
+var (
+    activeBookings   = make(map[string]bool)
+    activeBookingsMu sync.RWMutex
+)
+
+func addActiveBooking(bookingID string) {
+    activeBookingsMu.Lock()
+    defer activeBookingsMu.Unlock()
+    activeBookings[bookingID] = true
+}
+
+func removeActiveBooking(bookingID string) {
+    activeBookingsMu.Lock()
+    defer activeBookingsMu.Unlock()
+    delete(activeBookings, bookingID)
+}
+
+func isBookingActive(bookingID string) bool {
+    activeBookingsMu.RLock()
+    defer activeBookingsMu.RUnlock()
+    return activeBookings[bookingID]
+}
+
 func TrackTransport(w http.ResponseWriter, r *http.Request) {
-	bookingID := r.URL.Query().Get("booking_id")
-	if bookingID == "" {
-		http.Error(w, "Missing booking_id parameter", http.StatusBadRequest)
-		return
-	}
+    bookingID := r.URL.Query().Get("booking_id")
+    if bookingID == "" {
+        http.Error(w, "Missing booking_id parameter", http.StatusBadRequest)
+        return
+    }
 
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-		return
-	}
+    flusher, ok := w.(http.Flusher)
+    if !ok {
+        http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+        return
+    }
 
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
+    w.Header().Set("Content-Type", "text/event-stream")
+    w.Header().Set("Cache-Control", "no-cache")
+    w.Header().Set("Connection", "keep-alive")
 
-	// Send initial data
-	locations := GetLocationsFromMongoDB(bookingID)
-	for _, loc := range locations {
-		locJSON, _ := json.Marshal(loc)
-		fmt.Fprintf(w, "data: %s\n\n", locJSON)
-	}
-	flusher.Flush()
+    // Check if booking is active
+    if !isBookingActive(bookingID) {
+        fmt.Fprintf(w, "event: end\ndata: Booking not active\n\n")
+        flusher.Flush()
+        return
+    }
 
-	// Listen for new location updates
-	changeStream := GetMongoChangeStream(bookingID)
+    // Send historical data
+    locations, err := GetLocationsFromMongoDB(bookingID)
+    if err != nil {
+        http.Error(w, "Error fetching locations", http.StatusInternalServerError)
+        return
+    }
+    for _, loc := range locations {
+        locJSON, _ := json.Marshal(loc.Location)
+        fmt.Fprintf(w, "data: %s\n\n", locJSON)
+    }
+    flusher.Flush()
 
-	defer changeStream.Close(ctx)
+    // Listen for new location updates
+    changeStream, err := GetMongoChangeStream(bookingID)
+    if err != nil {
+        http.Error(w, "Error opening change stream", http.StatusInternalServerError)
+        return
+    }
+    defer changeStream.Close(ctx)
 
-	for changeStream.Next(ctx) {
-		var event struct {
-			FullDocument LocationRecord `bson:"fullDocument"`
-		}
-		if err := changeStream.Decode(&event); err != nil {
-			log.Printf("Error decoding change stream document: %v", err)
-			continue
-		}
+    for {
+        if !isBookingActive(bookingID) {
+            fmt.Fprintf(w, "event: end\ndata: Booking completed\n\n")
+            flusher.Flush()
+            break
+        }
 
-		locJSON, _ := json.Marshal(event.FullDocument.Location)
-		fmt.Fprintf(w, "data: %s\n\n", string(locJSON))
-		flusher.Flush()
-	}
+        if changeStream.Next(ctx) {
+            var event struct {
+                FullDocument LocationRecord `bson:"fullDocument"`
+            }
+            if err := changeStream.Decode(&event); err != nil {
+                log.Printf("Error decoding change stream document: %v", err)
+                continue
+            }
 
-	if err := changeStream.Err(); err != nil {
-		log.Printf("Change stream error: %v", err)
-	}
-}
-func GetUserBookings(w http.ResponseWriter, r *http.Request) {
-	userIDStr := r.URL.Query().Get("user_id")
-	if userIDStr == "" {
-		http.Error(w, "Missing user_id parameter", http.StatusBadRequest)
-		return
-	}
-
-    userID, err := strconv.ParseInt(userIDStr, 10, 64)
-	if err != nil {
-		http.Error(w, "Invalid user_id parameter", http.StatusBadRequest)
-		return
-	}
-
-	bookings, err := GetBookingsByUserID(userID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(bookings)
-}
-func GetBookingsByUserID(userID int64) ([]BookingDetailsResponse, error) {
-	var bookings []BookingDetailsResponse
-
-	query := `
-        SELECT id, user_id, driver_id,
-               ST_Y(pickup_location::geometry) AS pickup_lat,
-               ST_X(pickup_location::geometry) AS pickup_lng,
-               ST_Y(dropoff_location::geometry) AS dropoff_lat,
-               ST_X(dropoff_location::geometry) AS dropoff_lng,
-               fare_amount, status
-        FROM bookings
-        WHERE user_id = $1
-        ORDER BY created_at DESC
-    `
-
-	rows, err := dbPool.Query(ctx, query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var booking BookingDetailsResponse
-		err := rows.Scan(
-			&booking.BookingID,
-			&booking.UserID,
-			&booking.DriverID,
-			&booking.PickupLocation.Lat,
-			&booking.PickupLocation.Lng,
-			&booking.DropoffLocation.Lat,
-			&booking.DropoffLocation.Lng,
-			&booking.FareAmount,
-			&booking.Status,
-		)
-		if err != nil {
-			return nil, err
-		}
-		bookings = append(bookings, booking)
-	}
-
-	return bookings, nil
+            locJSON, _ := json.Marshal(event.FullDocument.Location)
+            fmt.Fprintf(w, "data: %s\n\n", string(locJSON))
+            flusher.Flush()
+        } else if err := changeStream.Err(); err != nil {
+            log.Printf("Change stream error: %v", err)
+            break
+        }
+    }
 }
