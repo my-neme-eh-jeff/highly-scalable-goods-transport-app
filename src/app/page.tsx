@@ -8,18 +8,18 @@ import Link from "next/link";
 
 export default function Home() {
   const negText = {
-    color: "#F26602",
+    color: "#fff",
     mixBlendMode: "difference",
   };
 
   const negDiv = {
     zIndex: 10,
-    backgroundColor: "#F26602 ",
+    backgroundColor: "#301934",
     mixBlendMode: "difference ",
   };
   const negDivInner = {
     zIndex: 10,
-    backgroundColor: "#FF8E00 ",
+    backgroundColor: "#2C2C54",
     mixBlendMode: "difference ",
   };
 
@@ -41,7 +41,7 @@ export default function Home() {
           <div className="pl-20 pt-20">
             <h1
               style={negText}
-              className="text-8xl font-bold text-transparent bg-blend- font-PTMono"
+              className="text-8xl font-bold text-transparent bg-blend- font-PTMono "
             >
               TransMart
             </h1>
@@ -52,11 +52,11 @@ export default function Home() {
               >
                 <span
                   style={{ color: "white !important", mixBlendMode: "normal" }}
-                  className="flex gap-2 items-center justify-center"
+                  className="flex gap-2 items-center justify-center group"
                 >
                   Book a Ride
                   {/* //on hover translate this to right */}
-                  <ArrowRight className="transform transition-all duration-300 hover:translate-x-2" />
+                  <ArrowRight className="transform transition-all duration-300 group-hover:translate-x-2" />
                 </span>
               </button>
             </Link>
@@ -96,13 +96,13 @@ export default function Home() {
         <div className="flex justify-evenly pt-[17vh] h-[80vh]  min-w-[calc(100vw - 7px)] lg:flex-row flex-col items-center">
           <div className="lg:w-[500px] w-[80%] h-[400px] bg-gray-400 rounded-xl"></div>
           <div className="lg:w-[500px] w-[80%] h-[400px] text-center lg:text-end  lg:text-5xl text-3xl font-bold flex items-center rounded-xl">
-            Stream anytime or watch your favorite creators live
+            Book ride from any corner of the world
           </div>
         </div>
 
         <div className="flex justify-evenly pt-[17vh] h-[80vh]  min-w-[calc(100vw - 7px)] lg:flex-row flex-col-reverse items-center">
           <div className="lg:w-[500px] w-[80%] h-[400px] text-center lg:text-start  lg:text-5xl text-3xl font-bold flex items-center rounded-xl">
-            Invest in creators to earn when they do well
+            Instant matching with driver
           </div>
           <div className="lg:w-[500px] w-[80%] h-[400px] bg-gray-400 rounded-xl"></div>
         </div>
@@ -110,7 +110,7 @@ export default function Home() {
         <div className="flex justify-evenly pt-[17vh] h-[80vh]  min-w-[calc(100vw - 7px)] lg:flex-row flex-col items-center">
           <div className="lg:w-[500px] w-[80%] h-[400px] bg-gray-400 rounded-xl"></div>
           <div className="lg:w-[500px] w-[80%] h-[400px] text-center lg:text-end  lg:text-5xl text-3xl font-bold flex items-center rounded-xl">
-            Creators have access to specialized UserBase analysis
+            Book ride from any corner of the world
           </div>
         </div>
       </div>

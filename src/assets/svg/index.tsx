@@ -48,8 +48,8 @@ export const BackgroundShape1 = ({}) => {
     >
       <defs>
         <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#F06822" />
-          <stop offset="100%" stopColor="#FFA500" />
+          <stop offset="0%" stopColor="#301934" />
+          <stop offset="100%" stopColor="#" />
         </linearGradient>
       </defs>
       <polygon
@@ -78,8 +78,8 @@ export const BackgroundShape3 = ({}) => {
     >
       <defs>
         <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#F06822" />
-          <stop offset="100%" stopColor="#FFA500" />
+          <stop offset="0%" stopColor="#301934" />
+          <stop offset="100%" stopColor="#2C2C54" />
         </linearGradient>
       </defs>
       <polygon
@@ -109,8 +109,8 @@ export const BackgroundShape2 = ({}) => {
     >
       <defs>
         <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#F06822" />
-          <stop offset="100%" stopColor="#FFA500" />
+          <stop offset="0%" stopColor="#301934" />
+          <stop offset="100%" stopColor="#2C2C54" />
         </linearGradient>
       </defs>
       <polygon
