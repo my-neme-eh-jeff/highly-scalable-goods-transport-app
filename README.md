@@ -17,7 +17,9 @@ A comprehensive ride-sharing solution built with modern technologies, featuring 
 This project implements a complete ride-sharing platform with both frontend and backend components. The platform facilitates real-time ride booking, driver matching, location tracking, and payment processing through a microservices architecture and a modern web interface.
 
 ## 📐 Architecture
-[architecture](https://github.com/user-attachments/assets/60d715dc-6880-4f15-9854-5f15f2030a20)
+
+![architecture](https://github.com/user-attachments/assets/58500875-b136-40dd-b385-081a1428c3de)
+
 You can find the reasoning and explainination behind it [here](https://docs.google.com/document/d/1k2rRMaz8bm45_f6i-2wglWUaDMv8CLnWnFlcAX-j-CE/edit?usp=sharing) 
 You can also view complete system architecture diagram [here](https://excalidraw.com/#json=AAdmRY_7GbA_Niqt3iuET,HN-Y0n9DxFeS7x2KpTAzIg) in exalidraw.
 
