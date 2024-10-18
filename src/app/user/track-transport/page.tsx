@@ -66,23 +66,27 @@ const getStatusColor = (
   }
 };
 
-export default function RideHistory() {
+export default function TrackTransportPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
-  const [userId, setUserId] = useState(0);
+  const [userId, setUserId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: "booking_id",
     order: "desc",
   });
 
+  // Move localStorage access to a useEffect with proper checks
   useEffect(() => {
-    const storedUserId = window.localStorage.getItem("user_id");
-    if (storedUserId) {
-      setUserId(parseInt(storedUserId));
+    if (typeof window !== "undefined") {
+      const storedUserId = localStorage.getItem("user_id");
+      if (storedUserId) {
+        setUserId(parseInt(storedUserId));
+      }
     }
   }, []);
 
+  // Only fetch bookings when userId is available
   useEffect(() => {
     if (userId) {
       fetch(`http://localhost:8081/api/user/bookings?user_id=${userId}`)
@@ -96,7 +100,9 @@ export default function RideHistory() {
   }, [userId]);
 
   useEffect(() => {
-    let sorted = bookings ? [...bookings] : [];
+    if (!bookings) return;
+
+    let sorted = [...bookings];
 
     // Apply status filter
     if (statusFilter !== "all") {
@@ -146,7 +152,7 @@ export default function RideHistory() {
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="REQUESTED">Requested</SelectItem>
                 <SelectItem value="STARTED">Started</SelectItem>
-                <SelectItem value="CANCELLEd">Cancelled</SelectItem>
+                <SelectItem value="CANCELLED">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -179,30 +185,28 @@ export default function RideHistory() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBookings &&
-                filteredBookings.length > 0 &&
-                filteredBookings.map((booking) => (
-                  <TableRow key={booking.booking_id}>
-                    <TableCell className="font-medium">
-                      #{booking.booking_id}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusColor(booking.status) as never}>
-                        {booking.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>₹{booking.fare_amount}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        // onClick={() => handleTrack(booking)}
-                      >
-                        Track Ride
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {filteredBookings?.map((booking) => (
+                <TableRow key={booking.booking_id}>
+                  <TableCell className="font-medium">
+                    #{booking.booking_id}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusColor(booking.status) as never}>
+                      {booking.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>₹{booking.fare_amount}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      // onClick={() => handleTrack(booking)}
+                    >
+                      Track Ride
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </CardContent>

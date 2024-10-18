@@ -105,7 +105,7 @@ export default function DriverDashboardPage() {
   };
 
   const DialogComponent = () => (
-    <Dialog className="z-[999]" open={showDialog} onOpenChange={setShowDialog}>
+    <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New Booking Assigned</DialogTitle>

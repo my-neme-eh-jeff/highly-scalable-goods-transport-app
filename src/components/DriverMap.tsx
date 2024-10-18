@@ -142,7 +142,12 @@ const DriverMap: React.FC<DriverMapProps> = ({ driverId, assignedBooking }) => {
         center={mapCenter}
         zoom={10}
         scrollWheelZoom={true}
-        style={{ width: "800px", height: "500px", margin: "auto auto" }}
+        style={{
+          width: "800px",
+          height: "500px",
+          margin: "auto auto",
+          zIndex: 10,
+        }}
         ref={mapRef}
         attributionControl={false}
         minZoom={5}
