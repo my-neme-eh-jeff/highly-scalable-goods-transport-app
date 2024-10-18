@@ -5,7 +5,8 @@ package main
 import "time"
 
 type BookingRequest struct {
-	UserID          int      `json:"user_id"`
+	BookingID       int      `json:"booking_id"`
+	UserID          int64    `json:"user_id"`
 	PickupLocation  Location `json:"pickup_location"`
 	DropoffLocation Location `json:"dropoff_location"`
 	FareAmount      float64  `json:"fare_amount"`
@@ -24,7 +25,7 @@ type Location struct {
 
 type Booking struct {
 	ID              int
-	UserID          int
+	UserID          int64
 	DriverID        int
 	PickupLocation  Location
 	DropoffLocation Location

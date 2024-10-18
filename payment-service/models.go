@@ -3,7 +3,7 @@ package main
 import "time"
 
 type FareRequest struct {
-	UserID          int      `json:"user_id"`
+	UserID          int64      `json:"user_id"`
 	PickupLocation  Location `json:"pickup_location"`
 	DropoffLocation Location `json:"dropoff_location"`
 }
@@ -15,7 +15,7 @@ type Location struct {
 
 type Payment struct {
 	ID              int
-	UserID          int
+	UserID          int64
 	PickupLocation  string
 	DropoffLocation string
 	DistanceKM      float64

@@ -21,6 +21,8 @@ func BookTransport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req.BookingID = bookingID // Set the booking ID in the request
+
 	// Push to Kafka
 	err = PushToKafka("user_bookings", req)
 	if err != nil {
@@ -52,11 +54,18 @@ func DriverRespondBooking(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// Push event to RabbitMQ
-		PushEventToRabbitMQ("booking_started", req.BookingID)
-	} else {
+		// Push event to RabbitMQ or perform other actions as needed
+		// For example, notify the user that the driver has accepted the booking
+	} else if req.Response == "REJECT" {
 		// Release driver lock in Redis
 		ReleaseDriverLock(req.DriverID)
+		// Update booking status to 'PENDING' or 'REJECTED'
+		err := UpdateBookingStatus(req.BookingID, "PENDING")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// Optionally, you can implement logic to try assigning another driver
 	}
 
 	// Respond to driver
@@ -74,7 +83,7 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := strconv.Atoi(userIDStr)
+    userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid user_id parameter", http.StatusBadRequest)
 		return
@@ -91,32 +100,31 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 }
 
 func DriverCompleteRide(w http.ResponseWriter, r *http.Request) {
-    var req struct {
-        DriverID  int `json:"driver_id"`
-        BookingID int `json:"booking_id"`
-    }
+	var req struct {
+		DriverID  int `json:"driver_id"`
+		BookingID int `json:"booking_id"`
+	}
 
-    err := json.NewDecoder(r.Body).Decode(&req)
-    if err != nil {
-        http.Error(w, "Invalid request body", http.StatusBadRequest)
-        return
-    }
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
 
-    // Update booking status to 'COMPLETED'
-    err = UpdateBookingStatus(req.BookingID, "COMPLETED")
-    if err != nil {
-        http.Error(w, "Failed to update booking status", http.StatusInternalServerError)
-        return
-    }
+	// Update booking status to 'COMPLETED'
+	err = UpdateBookingStatus(req.BookingID, "COMPLETED")
+	if err != nil {
+		http.Error(w, "Failed to update booking status", http.StatusInternalServerError)
+		return
+	}
 
-    // Release driver lock
-    ReleaseDriverLock(req.DriverID)
+	// Release driver lock
+	ReleaseDriverLock(req.DriverID)
 
-    // Respond to the driver
-    resp := map[string]string{
-        "status": "COMPLETED",
-    }
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(resp)
+	// Respond to the driver
+	resp := map[string]string{
+		"status": "COMPLETED",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
-

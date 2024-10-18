@@ -4,7 +4,7 @@ import "time"
 
 type Booking struct {
 	ID              int
-	UserID          int
+	UserID          int64
 	DriverID        int
 	PickupLocation  Location
 	DropoffLocation Location
@@ -20,7 +20,7 @@ type Location struct {
 
 type BookingDetailsResponse struct {
 	BookingID       int      `json:"booking_id"`
-	UserID          int      `json:"user_id"`
+	UserID          int64    `json:"user_id"`
 	DriverID        int      `json:"driver_id"`
 	PickupLocation  Location `json:"pickup_location"`
 	DropoffLocation Location `json:"dropoff_location"`

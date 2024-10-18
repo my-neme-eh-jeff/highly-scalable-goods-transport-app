@@ -63,7 +63,7 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := strconv.Atoi(userIDStr)
+    userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid user_id parameter", http.StatusBadRequest)
 		return
@@ -77,7 +77,7 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(bookings)
 }
-func GetBookingsByUserID(userID int) ([]BookingDetailsResponse, error) {
+func GetBookingsByUserID(userID int64) ([]BookingDetailsResponse, error) {
 	var bookings []BookingDetailsResponse
 
 	query := `

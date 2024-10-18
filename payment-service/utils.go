@@ -29,7 +29,7 @@ func CheckSurgePricing(location Location) float64 {
 	return 1.0
 }
 
-func SaveFareRequestInRedis(userID int, location Location) {
+func SaveFareRequestInRedis(userID int64, location Location) {
 	key := "fare_requests:" + GetGridKey(location)
 	err := redisClient.Incr(ctx, key).Err()
 	if err != nil {

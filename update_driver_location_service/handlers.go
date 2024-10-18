@@ -1,28 +1,25 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var (
-	upgrader    = websocket.Upgrader{}
-	ctx         = context.Background()
-	mongoClient *mongo.Client
-	redisClient *redis.Client
-)
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all origins for development; secure this in production
+	},
+}
 
 func DriverLocationWebSocket(w http.ResponseWriter, r *http.Request) {
 	driverIDStr := r.URL.Query().Get("driver_id")
-	bookingID := r.URL.Query().Get("booking_id")
-	if driverIDStr == "" || bookingID == "" {
-		http.Error(w, "Missing driver_id or booking_id parameter", http.StatusBadRequest)
+	bookingIDStr := r.URL.Query().Get("booking_id")
+	log.Printf("Driver %s connected for location updates.", driverIDStr)
+	if driverIDStr == "" {
+		http.Error(w, "Missing driver_id parameter", http.StatusBadRequest)
 		return
 	}
 
@@ -34,10 +31,12 @@ func DriverLocationWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Upgrade error:", err)
+		log.Printf("WebSocket upgrade error: %v", err)
 		return
 	}
 	defer conn.Close()
+
+	log.Printf("Driver %d connected for location updates.", driverID)
 
 	for {
 		var locationUpdate struct {
@@ -46,14 +45,22 @@ func DriverLocationWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 		err := conn.ReadJSON(&locationUpdate)
 		if err != nil {
-			log.Println("Read error:", err)
+			log.Printf("Read error: %v", err)
 			break
 		}
 
-		// Save to Redis
-		SaveDriverLocationToRedis(driverID, Location{Lat: locationUpdate.Lat, Lng: locationUpdate.Lng})
-
-		// Save to MongoDB for tracking
-		SaveLocationToMongoDB(bookingID, locationUpdate.Lat, locationUpdate.Lng)
+		if bookingIDStr != "" {
+			// Driver is in a ride, save to MongoDB
+			SaveLocationToMongoDB(bookingIDStr, locationUpdate.Lat, locationUpdate.Lng)
+		} else {
+			// Driver is not in a ride, save to Redis
+			driverLocation := Location{
+				Lat: locationUpdate.Lat,
+				Lng: locationUpdate.Lng,
+			}
+			SaveDriverLocationToRedis(driverID, driverLocation)
+		}
 	}
+
+	log.Printf("Driver %d disconnected from location updates.", driverID)
 }

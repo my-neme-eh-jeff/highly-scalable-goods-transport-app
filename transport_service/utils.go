@@ -97,9 +97,8 @@ func SaveBooking(req BookingRequest) (int, error) {
 }
 
 func PushToKafka(topic string, message interface{}) error {
-	// Read Confluent Cloud config from client.properties
 	config := ReadKafkaConfig()
-
+	log.Printf("Kafka Config: %v", config)
 	p, err := kafka.NewProducer(&config)
 	if err != nil {
 		return fmt.Errorf("failed to create producer: %v", err)
@@ -123,23 +122,27 @@ func PushToKafka(topic string, message interface{}) error {
 	msgBytes, _ := json.Marshal(message)
 	err = p.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Timestamp:      time.Now(),
 		Value:          msgBytes,
 	}, nil)
 
+	
 	// Flush messages to Kafka
 	p.Flush(15000)
 	return err
 }
 
 func UpdateBookingStatus(bookingID int, status string) error {
-	_, err := dbPool.Exec(ctx, `
+    _, err := dbPool.Exec(ctx, `
         UPDATE bookings SET status = $1 WHERE id = $2
     `, status, bookingID)
-	if err != nil {
-		log.Printf("Error updating booking status: %v", err)
-	}
-	return err
+    if err != nil {
+        log.Printf("Error updating booking status: %v", err)
+        return err
+    }
+    return nil
 }
+
 
 func PushEventToRabbitMQ(eventType string, bookingID int) error {
 	conn, err := amqp.Dial(os.Getenv("CLOUDAMQP_URL"))
@@ -189,7 +192,7 @@ func ReleaseDriverLock(driverID int) {
 	}
 }
 
-func GetBookingsByUserID(userID int) ([]Booking, error) {
+func GetBookingsByUserID(userID int64) ([]Booking, error) {
 	var bookings []Booking
 	query := `
         SELECT id, user_id, driver_id,
