@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import { toast } from "sonner";
-import { connectToBookingWebSocket } from "@/utils/driverWebSocket";
+import { titleVariants } from "@/components/textVariants";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { type Booking } from "@/types/booking";
-import { titleVariants } from "@/components/textVariants";
 import { cn } from "@/lib/utils";
+import { type Booking } from "@/types/booking";
+import { connectToBookingWebSocket } from "@/utils/driverWebSocket";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const DriverMap = dynamic(() => import("@/components/DriverMap"), {
   ssr: false,
@@ -108,8 +108,12 @@ export default function DriverDashboardPage() {
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New Booking Assigned</DialogTitle>
-          <DialogDescription>
+          <DialogTitle
+            className={cn(titleVariants({ size: "sm", color: "golden" }),"h-24")}
+          >
+            New Booking Assigned
+          </DialogTitle>
+          <DialogDescription className="text-lg">
             A new booking has been assigned to you. Do you want to accept it?
           </DialogDescription>
         </DialogHeader>
@@ -127,15 +131,18 @@ export default function DriverDashboardPage() {
               {`${assignedBooking.dropoff_location.lat}, ${assignedBooking.dropoff_location.lng}`}
             </p>
             <p>
-              <strong>Fare Amount:</strong> ₹{assignedBooking.fare_amount}
+              <strong>Fare Amount:</strong> ₹{" "}
+              {Math.round(assignedBooking.fare_amount)}
             </p>
           </div>
         )}
         <DialogFooter>
-          <Button variant="secondary" onClick={handleRejectBooking}>
+          <Button variant="destructive" onClick={handleRejectBooking}>
             Reject
           </Button>
-          <Button onClick={handleAcceptBooking}>Accept</Button>
+          <Button onClick={handleAcceptBooking} variant={"success"}>
+            Accept
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

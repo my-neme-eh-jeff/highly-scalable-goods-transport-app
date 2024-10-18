@@ -31,7 +31,7 @@ export default function UserBookingPage() {
   const [isBookTransportLoading, setIsBookTransportLoading] = useState(false);
   const [user_id, setUserId] = useState(0);
   const bookTransport = async () => {
-    if (!fareDetails || user_id == 0) {
+    if (!fareDetails) {
       toast.warning("Please get fare details first.");
       return;
     }
@@ -53,7 +53,7 @@ export default function UserBookingPage() {
               lat: dropoffLocation!.lat,
               lng: dropoffLocation!.lng,
             },
-            fare_amt: fareDetails.fare_amount,
+            fare_amount: fareDetails.fare_amount,
           }),
         }
       );
@@ -73,7 +73,7 @@ export default function UserBookingPage() {
     }
   };
   const handleGetFare = async () => {
-    if (!pickupLocation || !dropoffLocation || user_id == 0) {
+    if (!pickupLocation || !dropoffLocation) {
       toast.warning("Please select both pickup and dropoff locations.");
       return;
     }
@@ -115,6 +115,7 @@ export default function UserBookingPage() {
       const existingUserId = window.localStorage.getItem("user_id");
 
       if (existingUserId) {
+        console.log("Existing user id found:", existingUserId);
         return parseInt(existingUserId);
       }
 

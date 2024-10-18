@@ -33,7 +33,7 @@ const DisplayRouteMap = dynamic(() => import("@/components/DisplayRouteMap"), {
   ssr: false,
 });
 
-type SortField = "booking_id" | "fare_amount";
+type SortField = "ID" | "FareAmount";
 type SortOrder = "asc" | "desc";
 
 interface SortConfig {
@@ -42,28 +42,20 @@ interface SortConfig {
 }
 
 type Booking = {
-  booking_id: number;
-  user_id: number;
-  driver_id: number;
-  pickup_location: { lat: number; lng: number };
-  dropoff_location: { lat: number; lng: number };
-  fare_amount: number;
-  status: string;
-};
-
-const getStatusColor = (
-  status: string
-): "default" | "success" | "warning" | "destructive" => {
-  switch (status.toLowerCase()) {
-    case "completed":
-      return "success";
-    case "ongoing":
-      return "warning";
-    case "cancelled":
-      return "destructive";
-    default:
-      return "default";
-  }
+  ID: number;
+  UserID: number;
+  DriverID: number;
+  PickupLocation: {
+    lat: number;
+    lng: number;
+  };
+  DropoffLocation: {
+    lat: number;
+    lng: number;
+  };
+  FareAmount: number;
+  Status: string;
+  CreatedAt: string;
 };
 
 export default function TrackTransportPage() {
@@ -72,7 +64,7 @@ export default function TrackTransportPage() {
   const [userId, setUserId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    field: "booking_id",
+    field: "ID",
     order: "desc",
   });
 
@@ -107,7 +99,7 @@ export default function TrackTransportPage() {
     // Apply status filter
     if (statusFilter !== "all") {
       sorted = sorted.filter(
-        (booking) => booking.status.toLowerCase() === statusFilter.toLowerCase()
+        (booking) => booking.Status.toLowerCase() === statusFilter.toLowerCase()
       );
     }
 
@@ -163,7 +155,7 @@ export default function TrackTransportPage() {
                 <TableHead>
                   <Button
                     variant="ghost"
-                    onClick={() => toggleSort("booking_id")}
+                    onClick={() => toggleSort("ID")}
                     className="flex items-center space-x-1"
                   >
                     Booking ID
@@ -174,7 +166,7 @@ export default function TrackTransportPage() {
                 <TableHead>
                   <Button
                     variant="ghost"
-                    onClick={() => toggleSort("fare_amount")}
+                    onClick={() => toggleSort("FareAmount")}
                     className="flex items-center space-x-1"
                   >
                     Fare Amount
@@ -186,16 +178,31 @@ export default function TrackTransportPage() {
             </TableHeader>
             <TableBody>
               {filteredBookings?.map((booking) => (
-                <TableRow key={booking.booking_id}>
+                <TableRow key={booking.ID}>
                   <TableCell className="font-medium">
-                    #{booking.booking_id}
+                    #{booking.ID} (
+                    {new Date(booking.CreatedAt).toLocaleDateString()})
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusColor(booking.status) as never}>
-                      {booking.status}
+                    <Badge
+                      className={`${
+                        booking.Status === "COMPLETED"
+                          ? "bg-success"
+                          : booking.Status == "REJECT"
+                          ? "bg-destructive"
+                          : booking.Status === "STARTED"
+                          ? "bg-green-100"
+                          : booking.Status == "REQUESTED"
+                          ? "bg-muted-foreground"
+                          : booking.Status === "DRIVER_ASSIGNED"
+                          ? "bg-yellow-600"
+                          : ""
+                      }`}
+                    >
+                      {booking.Status}
                     </Badge>
                   </TableCell>
-                  <TableCell>₹{booking.fare_amount}</TableCell>
+                  <TableCell>₹ {booking.FareAmount}</TableCell>
                   <TableCell>
                     <Button
                       variant="outline"
@@ -220,15 +227,15 @@ export default function TrackTransportPage() {
           <CardContent>
             <DisplayRouteMap
               bookings={bookings.map((booking) => ({
-                booking_id: booking.booking_id,
-                status: booking.status,
+                booking_id: booking.ID,
+                status: booking.Status,
                 pickup_location: new LatLng(
-                  booking.pickup_location.lat,
-                  booking.pickup_location.lng
+                  booking.PickupLocation.lat,
+                  booking.PickupLocation.lng
                 ),
                 dropoff_location: new LatLng(
-                  booking.dropoff_location.lat,
-                  booking.dropoff_location.lng
+                  booking.DropoffLocation.lat,
+                  booking.DropoffLocation.lng
                 ),
               }))}
             />
