@@ -56,8 +56,8 @@ This repository maintains three main branches:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your_username/your_repository.git
-cd your_repository
+git clone https://github.com/my-neme-eh-jeff/highly-scalable-goods-transport-app.git app
+cd app
 ```
 
 2. Choose your branch based on your needs:
