@@ -1,6 +1,6 @@
-# 🚗 Ride-Sharing Platform
+# 🚗 Goods Transport booking app
 
-A comprehensive ride-sharing solution built with modern technologies, featuring real-time tracking, interactive maps, and seamless payment integration.
+A comprehensive goods transport solution built with modern technologies, featuring real-time tracking, interactive maps, and designed to handle loads of *10k Requests/sec* with **50m users** and **100k drivers**
 
 ## 📑 Table of Contents
 - [Overview](#overview)
