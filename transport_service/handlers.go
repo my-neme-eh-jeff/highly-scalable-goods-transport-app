@@ -61,12 +61,11 @@ func DriverRespondBooking(w http.ResponseWriter, r *http.Request) {
 		// Release driver lock in Redis
 		ReleaseDriverLock(req.DriverID)
 		// Update booking status to 'PENDING' or 'REJECTED'
-		err := UpdateBookingStatus(req.BookingID, "PENDING")
+		err := UpdateBookingStatus(req.BookingID, "REJECTED")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// Optionally, you can implement logic to try assigning another driver
 	}
 
 	// Respond to driver
