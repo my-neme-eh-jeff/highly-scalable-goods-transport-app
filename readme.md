@@ -61,7 +61,7 @@ cd your_repository
 
 ### 2. Set Environment Variables
 
-Create a `.env.local` file in the root directory:
+Create a `.env.local` file in each directory according to the .env.example given. You will require:
 
 ```bash
 # Redis connection string
@@ -76,7 +76,7 @@ MONGODB_URI="your_mongodb_connection_string"
 # RabbitMQ connection string
 CLOUDAMQP_URL="your_rabbitmq_connection_string"
 
-# Kafka connection properties will go in client.properties
+# Kafka connection properties will go in client.properties in root of "transport_service" and "transport_matcher_services"
 ```
 
 > ⚠️ **Important**: Do not commit the `.env.local` file to version control!
@@ -151,20 +151,10 @@ go run .
 
 ## 📝 Additional Notes
 
-### Security
-- Keep environment variables secure
-- Never commit sensitive information
-- Use secure connection strings
-
 ### Database Management
 - Services auto-create required tables
 - Consider using migrations in production
 - Regular backup recommendations
-
-### Logging
-- All service logs stored in `logs` directory
-- Structured logging format
-- Regular log rotation recommended
 
 ### Error Handling
 - Comprehensive error handling implemented
