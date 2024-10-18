@@ -17,7 +17,7 @@ import iconShadow from "leaflet/dist/images/marker-shadow.png";
 // Set default icon
 const DefaultIcon = L.icon({
   iconUrl: icon as unknown as string,
-  shadowUrl: iconShadow as unknown as string, 
+  shadowUrl: iconShadow as unknown as string,
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
@@ -28,12 +28,6 @@ type Booking = {
   pickup_location: LatLng;
   dropoff_location: LatLng;
 };
-
-interface BookingRoutesMapProps {
-  bookings: Booking[];
-  width?: string;
-  height?: string;
-}
 
 const createCustomIcon = (
   color: string,
@@ -49,10 +43,14 @@ const createCustomIcon = (
 const pickupIcon = createCustomIcon("#4CAF50", "Pickup", "start");
 const dropoffIcon = createCustomIcon("#F44336", "Dropoff", "end");
 
-const BookingRoutesMap: React.FC<BookingRoutesMapProps> = ({
+const BookingRoutesMap = ({
   bookings,
   width = "100%",
   height = "500px",
+}: {
+  bookings: Booking[];
+  width?: string;
+  height?: string;
 }) => {
   const mapRef = useRef<L.Map | null>(null);
 

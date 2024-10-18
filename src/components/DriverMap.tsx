@@ -1,8 +1,10 @@
+// components/DriverMap.tsx
+
 "use client";
 import "leaflet/dist/leaflet.css";
 import L, { DivIcon, LatLng } from "leaflet";
 import React, { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 
 // Import marker icons
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -18,14 +20,11 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 import { toast } from "sonner";
 import { connectToPersistentLocationWebSocket } from "@/utils/driverWebSocket";
+import { type Booking } from "@/types/booking";
 
 interface DriverMapProps {
   driverId: number | null;
-  bookingId: number | null;
-  location: { lat: number; lng: number } | null;
-  setLocation: React.Dispatch<
-    React.SetStateAction<{ lat: number; lng: number } | null>
-  >;
+  assignedBooking: Booking | null;
 }
 
 const createCustomIcon = (
@@ -35,23 +34,43 @@ const createCustomIcon = (
 ): DivIcon => {
   return L.divIcon({
     className: customClassName,
-    html: `<div style="background-color: ${color}; width: 3rem; height: 3rem; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;">${label}</div>`,
+    html: `<div style="background-color: ${color}; width: 2.5rem; height: 2.5rem; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;">${label}</div>`,
   });
 };
 
-const driverIcon = createCustomIcon("#FFA500", "Driver", "driver");
+const driverIcon = createCustomIcon("#FFA500", "YOU", "driver-icon");
+const pickupIcon = createCustomIcon("red", "Pick", "pickup-icon");
+const dropoffIcon = createCustomIcon("#28A745", "Drop", "dropoff-icon");
 
-const DriverMap: React.FC<DriverMapProps> = ({
-  driverId,
-  bookingId,
-  location,
-  setLocation,
-}) => {
+const DriverMap: React.FC<DriverMapProps> = ({ driverId, assignedBooking }) => {
+  const [driverLocation, setDriverLocation] = useState<LatLng | null>(null);
+  const [pickupLocation, setPickupLocation] = useState<LatLng | null>(null);
+  const [dropoffLocation, setDropoffLocation] = useState<LatLng | null>(null);
   const [mapCenter, setMapCenter] = useState<LatLng>(
     new LatLng(19.076, 72.8777)
-  );
+  ); // Default to Mumbai coordinates
   const mapRef = useRef<L.Map | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    if (assignedBooking) {
+      setPickupLocation(
+        new LatLng(
+          assignedBooking.pickup_location.lat,
+          assignedBooking.pickup_location.lng
+        )
+      );
+      setDropoffLocation(
+        new LatLng(
+          assignedBooking.dropoff_location.lat,
+          assignedBooking.dropoff_location.lng
+        )
+      );
+    } else {
+      setPickupLocation(null);
+      setDropoffLocation(null);
+    }
+  }, [assignedBooking]);
 
   useEffect(() => {
     if (!driverId) return;
@@ -60,19 +79,26 @@ const DriverMap: React.FC<DriverMapProps> = ({
 
     if (navigator.geolocation) {
       // Establish WebSocket connection
-      wsRef.current = connectToPersistentLocationWebSocket(driverId, bookingId);
+      wsRef.current = connectToPersistentLocationWebSocket(
+        driverId,
+        assignedBooking?.booking_id || null
+      );
 
       watchId = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          const newLocation = { lat: latitude, lng: longitude };
-          setLocation(newLocation);
+          const newLocation = new LatLng(latitude, longitude);
+          setDriverLocation(newLocation);
 
-          // Update map center
-          setMapCenter(new LatLng(newLocation.lat, newLocation.lng));
+          // Update map center to driver's current location
+          setMapCenter(newLocation);
 
           // Send location update via WebSocket
           if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            console.log("Sending location update:", {
+              lat: latitude,
+              lng: longitude,
+            });
             const locationUpdate = { lat: latitude, lng: longitude };
             wsRef.current.send(JSON.stringify(locationUpdate));
           }
@@ -96,15 +122,27 @@ const DriverMap: React.FC<DriverMapProps> = ({
         wsRef.current.close();
       }
     };
-  }, [driverId, bookingId, setLocation]);
+  }, [driverId, assignedBooking]);
+
+  useEffect(() => {
+    // Fit map bounds to include all markers
+    if (mapRef.current && driverLocation) {
+      const bounds = L.latLngBounds([driverLocation]);
+
+      if (pickupLocation) bounds.extend(pickupLocation);
+      if (dropoffLocation) bounds.extend(dropoffLocation);
+
+      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [driverLocation, pickupLocation, dropoffLocation]);
 
   return (
     <div>
       <MapContainer
         center={mapCenter}
-        zoom={13}
+        zoom={10}
         scrollWheelZoom={true}
-        style={{ width: "100%", height: "500px" }}
+        style={{ width: "800px", height: "500px", margin: "auto auto" }}
         ref={mapRef}
         attributionControl={false}
         minZoom={5}
@@ -112,9 +150,19 @@ const DriverMap: React.FC<DriverMapProps> = ({
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-        {location && (
-          <Marker position={location} icon={driverIcon}>
-            {/* Optionally add a Popup */}
+        {driverLocation && (
+          <Marker position={driverLocation} icon={driverIcon}>
+            <Popup>Your Location</Popup>
+          </Marker>
+        )}
+        {pickupLocation && (
+          <Marker position={pickupLocation} icon={pickupIcon}>
+            <Popup>Pickup Location</Popup>
+          </Marker>
+        )}
+        {dropoffLocation && (
+          <Marker position={dropoffLocation} icon={dropoffIcon}>
+            <Popup>Drop-off Location</Popup>
           </Marker>
         )}
       </MapContainer>

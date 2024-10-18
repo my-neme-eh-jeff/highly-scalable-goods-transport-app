@@ -84,7 +84,7 @@ export default function UserBookingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: process.env.NODE_ENV == "production" ? user_id : 1,
+          user_id: user_id,
           pickup_location: {
             lat: pickupLocation.lat,
             lng: pickupLocation.lng,
@@ -118,7 +118,7 @@ export default function UserBookingPage() {
         return parseInt(existingUserId);
       }
 
-      const newUserId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER) + 1;
+      const newUserId = Math.floor(Math.random() * (Number.MAX_SAFE_INTEGER / 100)) + 1;
       window.localStorage.setItem("user_id", newUserId.toString());
       return newUserId;
     };

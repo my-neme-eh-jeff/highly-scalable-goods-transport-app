@@ -25,7 +25,7 @@ export default function Navbar() {
           TransMart
         </Link>
         <Link
-          href="/user"
+          href="/"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
           Dashboard

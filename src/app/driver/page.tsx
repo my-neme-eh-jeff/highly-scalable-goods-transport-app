@@ -1,24 +1,30 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
-import { type Booking } from "@/types/booking";
 import { toast } from "sonner";
 import { connectToBookingWebSocket } from "@/utils/driverWebSocket";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { type Booking } from "@/types/booking";
+import { titleVariants } from "@/components/textVariants";
+import { cn } from "@/lib/utils";
 
-const DriverMap = dynamic(
-  () => import("@/components/DriverMap"),
-  {
-    ssr: false,
-  }
-);
+const DriverMap = dynamic(() => import("@/components/DriverMap"), {
+  ssr: false,
+});
 
 export default function DriverDashboardPage() {
   const [driverId, setDriverId] = useState<number | null>(null);
   const [assignedBooking, setAssignedBooking] = useState<Booking | null>(null);
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
-    null
-  );
+  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
     // Simulate driver login and get driver ID
@@ -37,6 +43,7 @@ export default function DriverDashboardPage() {
       // Connect to WebSocket for booking assignments
       connectToBookingWebSocket(driverId, (booking: Booking) => {
         setAssignedBooking(booking);
+        setShowDialog(true); // Show the dialog when a new booking is assigned
         toast.success(`New booking assigned: ${booking.booking_id}`);
       });
     }
@@ -47,13 +54,14 @@ export default function DriverDashboardPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:8081/api/driver/accept-booking",
+        "http://localhost:8081/api/driver/respond-booking",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             driver_id: driverId,
             booking_id: assignedBooking.booking_id,
+            response: "ACCEPT",
           }),
         }
       );
@@ -61,64 +69,90 @@ export default function DriverDashboardPage() {
         throw new Error("Failed to accept booking.");
       }
       toast.success("Booking accepted.");
+      setShowDialog(false);
     } catch (error) {
       console.error(error);
       toast.error("Failed to accept booking.");
     }
   };
 
-  const handleCompleteRide = async () => {
+  const handleRejectBooking = async () => {
     if (!assignedBooking || !driverId) return;
 
     try {
       const response = await fetch(
-        "http://localhost:8081/api/driver/complete-ride",
+        "http://localhost:8081/api/driver/respond-booking",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             driver_id: driverId,
             booking_id: assignedBooking.booking_id,
+            response: "REJECT",
           }),
         }
       );
       if (!response.ok) {
-        throw new Error("Failed to complete ride.");
+        throw new Error("Failed to reject booking.");
       }
-      toast.success("Ride completed.");
+      toast.success("Booking rejected.");
       setAssignedBooking(null);
+      setShowDialog(false);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to complete ride.");
+      toast.error("Failed to reject booking.");
     }
   };
 
+  const DialogComponent = () => (
+    <Dialog className="z-[999]" open={showDialog} onOpenChange={setShowDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New Booking Assigned</DialogTitle>
+          <DialogDescription>
+            A new booking has been assigned to you. Do you want to accept it?
+          </DialogDescription>
+        </DialogHeader>
+        {assignedBooking && (
+          <div className="space-y-2">
+            <p>
+              <strong>Booking ID:</strong> {assignedBooking.booking_id}
+            </p>
+            <p>
+              <strong>Pickup Location:</strong>{" "}
+              {`${assignedBooking.pickup_location.lat}, ${assignedBooking.pickup_location.lng}`}
+            </p>
+            <p>
+              <strong>Drop-off Location:</strong>{" "}
+              {`${assignedBooking.dropoff_location.lat}, ${assignedBooking.dropoff_location.lng}`}
+            </p>
+            <p>
+              <strong>Fare Amount:</strong> ₹{assignedBooking.fare_amount}
+            </p>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="secondary" onClick={handleRejectBooking}>
+            Reject
+          </Button>
+          <Button onClick={handleAcceptBooking}>Accept</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
-    <div>
-      <h1>Driver Dashboard</h1>
-      {assignedBooking ? (
-        <div>
-          <h2>Assigned Booking ID: {assignedBooking.booking_id}</h2>
-          <p>
-            Pickup Location:{" "}
-            {`${assignedBooking.pickup_location.lat}, ${assignedBooking.pickup_location.lng}`}
-          </p>
-          <p>
-            Drop-off Location:{" "}
-            {`${assignedBooking.dropoff_location.lat}, ${assignedBooking.dropoff_location.lng}`}
-          </p>
-          <Button onClick={handleAcceptBooking}>Accept Booking</Button>
-          <Button onClick={handleCompleteRide}>Complete Ride</Button>
-        </div>
-      ) : (
-        <p>No bookings assigned yet.</p>
-      )}
-      <DriverMap 
-        driverId={driverId}
-        bookingId={assignedBooking?.booking_id || null}
-        location={location}
-        setLocation={setLocation}
-      />
+    <div className="container mx-auto mt-8">
+      <h1
+        className={cn(
+          titleVariants({ color: "blue", size: "sm" }),
+          "text-center justify-center place-items-center place-content-center flex mb-4"
+        )}
+      >
+        Driver Dashboard
+      </h1>
+      <DriverMap driverId={driverId} assignedBooking={assignedBooking} />
+      <DialogComponent />
     </div>
   );
 }

@@ -1,6 +1,8 @@
+import { type Booking } from "@/types/booking";
+
 export function connectToBookingWebSocket(
     driverId: number,
-    onBookingAssigned: (booking: any) => void
+    onBookingAssigned: (booking: Booking) => void
 ) {
     const ws = new WebSocket(`ws://localhost:8084/ws/driver/assign?driver_id=${driverId}`);
 
@@ -9,41 +11,18 @@ export function connectToBookingWebSocket(
     };
 
     ws.onmessage = (event) => {
+        console.log("event", event)
         const booking = JSON.parse(event.data);
+        console.log("Booking assigned:", booking);
         onBookingAssigned(booking);
     };
 
     ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
+        console.log(error)
     };
 
     ws.onclose = () => {
-        console.log("WebSocket connection closed.");
-        // Optionally implement reconnection logic
-    };
-}
-
-export function connectToLocationWebSocket(
-    driverId: number,
-    bookingId: number,
-    lat: number,
-    lng: number
-) {
-    const ws = new WebSocket(
-        `ws://localhost:8083/ws/driver/update-location?driver_id=${driverId}&booking_id=${bookingId}`
-    );
-
-    ws.onopen = () => {
-        const locationUpdate = { lat, lng };
-        ws.send(JSON.stringify(locationUpdate));
-    };
-
-    ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-    };
-
-    ws.onclose = () => {
-        console.log("Location WebSocket connection closed.");
+        console.log("Booking assignment WebSocket connection closed.");
     };
 }
 
@@ -62,7 +41,8 @@ export function connectToPersistentLocationWebSocket(
     };
 
     ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
+        console.log("location vale me error h")
+        console.log("WebSocket error:", error);
     };
 
     ws.onclose = () => {

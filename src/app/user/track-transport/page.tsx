@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CarTaxiFront, ArrowUpDown } from "lucide-react";
+import { LatLng } from "leaflet";
 
 const DisplayRouteMap = dynamic(() => import("@/components/DisplayRouteMap"), {
   ssr: false,
@@ -68,7 +69,6 @@ const getStatusColor = (
 export default function RideHistory() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [userId, setUserId] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -96,7 +96,7 @@ export default function RideHistory() {
   }, [userId]);
 
   useEffect(() => {
-    let sorted = [...bookings];
+    let sorted = bookings ? [...bookings] : [];
 
     // Apply status filter
     if (statusFilter !== "all") {
@@ -113,10 +113,6 @@ export default function RideHistory() {
 
     setFilteredBookings(sorted);
   }, [statusFilter, sortConfig, bookings]);
-
-  const handleTrack = (booking: Booking) => {
-    setSelectedBooking(booking);
-  };
 
   const toggleSort = (field: SortField) => {
     setSortConfig((current) => ({
@@ -183,45 +179,54 @@ export default function RideHistory() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBookings.map((booking) => (
-                <TableRow key={booking.booking_id}>
-                  <TableCell className="font-medium">
-                    #{booking.booking_id}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusColor(booking.status) as never}>
-                      {booking.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>₹{booking.fare_amount}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleTrack(booking)}
-                    >
-                      Track Ride
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredBookings &&
+                filteredBookings.length > 0 &&
+                filteredBookings.map((booking) => (
+                  <TableRow key={booking.booking_id}>
+                    <TableCell className="font-medium">
+                      #{booking.booking_id}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusColor(booking.status) as never}>
+                        {booking.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>₹{booking.fare_amount}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        // onClick={() => handleTrack(booking)}
+                      >
+                        Track Ride
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {selectedBooking && (
+      {bookings && bookings.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>
-              Tracking Booking #{selectedBooking.booking_id}
-            </CardTitle>
+            <CardTitle>Tracking Booking</CardTitle>
           </CardHeader>
           <CardContent>
             <DisplayRouteMap
-              pickupLocation={selectedBooking.pickup_location}
-              dropoffLocation={selectedBooking.dropoff_location}
-              bookingId={selectedBooking.booking_id}
+              bookings={bookings.map((booking) => ({
+                booking_id: booking.booking_id,
+                status: booking.status,
+                pickup_location: new LatLng(
+                  booking.pickup_location.lat,
+                  booking.pickup_location.lng
+                ),
+                dropoff_location: new LatLng(
+                  booking.dropoff_location.lat,
+                  booking.dropoff_location.lng
+                ),
+              }))}
             />
           </CardContent>
         </Card>
