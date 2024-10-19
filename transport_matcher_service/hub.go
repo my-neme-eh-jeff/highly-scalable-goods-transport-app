@@ -6,8 +6,8 @@ import (
 
 type Hub struct {
 	// Registered clients.
-	clients map[int]*Client // Keyed by driverID
-
+	clients map[int]*Client 
+	
 	// Inbound messages from the clients.
 	broadcast chan interface{}
 

@@ -19,6 +19,7 @@ var (
 	ctx         = context.Background()
 	redisClient *redis.Client
 	dbPool      *pgxpool.Pool
+	conn        *amqp.Connection
 )
 
 func init() {
@@ -73,7 +74,25 @@ func init() {
 		log.Fatalf("Error creating 'bookings' table: %v", err)
 	}
 
+	// Initialize RabbitMQ
+	conn, err = amqp.Dial(os.Getenv("CLOUDAMQP_URL"))
+	if err != nil {
+		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+	}
+
 	log.Println("Connected to Redis and Postgres, and ensured 'bookings' table exists.")
+}
+
+func Cleanup() {
+	if conn != nil {
+		conn.Close()
+	}
+	if dbPool != nil {
+		dbPool.Close()
+	}
+	if redisClient != nil {
+		redisClient.Close()
+	}
 }
 
 func SaveBooking(req BookingRequest) (int, error) {
@@ -137,12 +156,6 @@ func UpdateBookingStatus(bookingID int, status string) error {
 	_, err := dbPool.Exec(ctx, `
         UPDATE bookings SET status = $1 WHERE id = $2
     `, status, bookingID)
-	if status == "ACCEPTED" {
-		PushEventToRabbitMQ("booking_accepted", bookingID)
-	}
-	if(status == "COMPLETED"){
-		PushEventToRabbitMQ("booking_completed", bookingID)
-	}
 	if err != nil {
 		log.Printf("Error updating booking status: %v", err)
 		return err
@@ -151,27 +164,30 @@ func UpdateBookingStatus(bookingID int, status string) error {
 }
 
 func PushEventToRabbitMQ(eventType string, bookingID int) error {
-	conn, err := amqp.Dial(os.Getenv("CLOUDAMQP_URL"))
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
+	log.Println("Pushing event to RabbitMQ function!!")
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
 	}
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare(eventType, false, true, false, false, nil)
+	q, err := ch.QueueDeclare(
+		eventType, // queue name
+		true,      // durable
+		false,     // autoDelete
+		false,     // exclusive
+		false,     // noWait
+		nil,       // args
+	)
 	if err != nil {
 		return err
 	}
 
 	body := fmt.Sprintf("%d", bookingID)
 	err = ch.Publish("", q.Name, false, false, amqp.Publishing{
-		ContentType: "text/plain",
-		Body:        []byte(body),
+		DeliveryMode: amqp.Persistent,
+		ContentType:  "text/plain",
+		Body:         []byte(body),
 	})
 	if err != nil {
 		return err
@@ -200,8 +216,7 @@ func ReleaseDriverLock(driverID int) {
 
 func GetBookingsByUserID(userID int64) ([]Booking, error) {
 	var bookings []Booking
-	//print the user id
-	fmt.Println(userID)
+
 	query := `
         SELECT id, user_id, driver_id,
                ST_Y(pickup_location::geometry) AS pickup_lat,
@@ -215,6 +230,7 @@ func GetBookingsByUserID(userID int64) ([]Booking, error) {
     `
 	rows, err := dbPool.Query(ctx, query, userID)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	defer rows.Close()

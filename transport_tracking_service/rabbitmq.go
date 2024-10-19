@@ -21,7 +21,7 @@ func ListenToRabbitMQ() {
     defer ch.Close()
 
     bookingAcceptedQueue, err := ch.QueueDeclare(
-        "booking_accepted", // name
+        "booking_started", // name
         true,               // durable
         false,              // delete when unused
         false,              // exclusive

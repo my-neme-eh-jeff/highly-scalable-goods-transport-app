@@ -22,7 +22,7 @@ func BookTransport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.BookingID = bookingID // Set the booking ID in the request
+	req.BookingID = bookingID 
 
 	// Push to Kafka
 	err = PushToKafka("user_bookings", req)
@@ -31,7 +31,7 @@ func BookTransport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return response
+	// Return respons
 	resp := map[string]interface{}{
 		"booking_id": bookingID,
 		"status":     "REQUESTED",
@@ -47,28 +47,39 @@ func DriverRespondBooking(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	if req.Response == "ACCEPT" {
-		// Update booking status to 'STARTED'
-		err := UpdateBookingStatus(req.BookingID, "STARTED")
+	fmt.Println(req.Response)
+	AcquireDriverLock(req.DriverID)
+	if req.Response == "ACCEPTED" {
+		err := UpdateBookingStatus(req.BookingID, "ACCEPTED")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// Push event to RabbitMQ or perform other actions as needed
-		// For example, notify the user that the driver has accepted the booking
 	} else if req.Response == "REJECT" {
-		// Release driver lock in Redis
 		ReleaseDriverLock(req.DriverID)
-		// Update booking status to 'PENDING' or 'REJECTED'
 		err := UpdateBookingStatus(req.BookingID, "REJECTED")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	} else if req.Response == "COMPLETED" {
+		err := UpdateBookingStatus(req.BookingID, "COMPLETED")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		PushEventToRabbitMQ("booking_completed", req.BookingID)
+		ReleaseDriverLock(req.DriverID)
+	} else if req.Response == "STARTED" {
+		fmt.Println("\n\nBooking started!!!!!!!\n\n")
+		err := UpdateBookingStatus(req.BookingID, "STARTED")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		PushEventToRabbitMQ("booking_started", req.BookingID)
 	}
 
-	// Respond to driver
 	resp := map[string]string{
 		"status": "OK",
 	}
@@ -82,8 +93,7 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing user_id parameter", http.StatusBadRequest)
 		return
 	}
-
-    userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid user_id parameter", http.StatusBadRequest)
 		return
@@ -91,6 +101,7 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 
 	bookings, err := GetBookingsByUserID(userID)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

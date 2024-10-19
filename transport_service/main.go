@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+    defer Cleanup() 
+
     router := mux.NewRouter()
 
     router.HandleFunc("/api/user/book-transport", BookTransport).Methods("POST")
