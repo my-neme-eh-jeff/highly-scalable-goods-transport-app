@@ -23,7 +23,9 @@ This project implements a complete ride-sharing platform with both frontend and 
 **You can find the reasoning and explainination behind it [here](https://docs.google.com/document/d/1k2rRMaz8bm45_f6i-2wglWUaDMv8CLnWnFlcAX-j-CE/edit?usp=sharing)**
 
 **Video explaination for the same** 
-https://github.com/user-attachments/assets/c327c043-a17c-44f9-851a-b0fde7b2316b
+
+https://github.com/user-attachments/assets/31d8ded8-2b2b-48f6-ac09-26301dc6e7ae
+
 
 > ⚠️ You can also view complete system architecture diagram [here](https://excalidraw.com/#json=AAdmRY_7GbA_Niqt3iuET,HN-Y0n9DxFeS7x2KpTAzIg) in exalidraw.
 
