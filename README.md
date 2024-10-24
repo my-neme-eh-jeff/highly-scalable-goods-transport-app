@@ -1,5 +1,4 @@
 
-https://github.com/user-attachments/assets/6803aee6-7953-4e5f-bc5b-79c9103cd7b6
 # 🚗 Goods Transport booking app
 
 A comprehensive goods transport solution built with modern technologies, featuring real-time tracking, interactive maps, and designed to handle loads of *10k Requests/sec* with **50m users** and **100k drivers**
